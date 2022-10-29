@@ -1,5 +1,5 @@
 require('./options/config')
-const { default: rolterConnect, useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion, generateForwardMessageContent, prepareWAMessageMedia, generateWAMessageFromContent, generateMessageID, downloadContentFromMessage, makeInMemoryStore, getContentType, jidDecode, proto } = require("@adiwajshing/baileys")
+const { default: ranzoConnect, useSingleFileAuthState, DisconnectReason, fetchLatestBaileysVersion, generateForwardMessageContent, prepareWAMessageMedia, generateWAMessageFromContent, generateMessageID, downloadContentFromMessage, makeInMemoryStore, getContentType, jidDecode, proto } = require("@adiwajshing/baileys")
 const { state, saveState } = useSingleFileAuthState(`./session/${sessionName}.json`)
 const pino = require('pino')
 const { Boom } = require('@hapi/boom')
@@ -11,18 +11,18 @@ const path = require('path')
 const _ = require('lodash')
 const axios = require('axios')
 const PhoneNumber = require('awesome-phonenumber')
-const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif')
+const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./options/exif')
 const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('./options/myfunc')
 
 var low
 try {
   low = require('lowdb')
 } catch (e) {
-  low = require('./lib/lowdb')
+  low = require('./options/lowdb')
 }
 
 const { Low, JSONFile } = low
-const mongoDB = require('./lib/mongoDB')
+const mongoDB = require('./options/mongoDB')
 
 global.api = (name, path = '/', query = {}, apikeyqueryname) => (name in global.APIs ? global.APIs[name] : name) + path + (query || apikeyqueryname ? '?' + new URLSearchParams(Object.entries({ ...query, ...(apikeyqueryname ? { [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name] } : {}) })) : '')
 
@@ -61,68 +61,64 @@ if (global.db) setInterval(async () => {
     if (global.db.data) await global.db.write()
   }, 30 * 20000)
 
-async function startRolter() {
-    const rolter = rolterConnect({
+async function startRanzo() {
+    const ranzo = ranzoConnect({
         logger: pino({ level: 'silent' }),
         printQRInTerminal: true,
-        browser: ['Rolter','Firefox','1.0.0'],
+        browser: ['Ranzo','Web','1.0.0'],
         auth: state
     })
 
-    store.bind(rolter.ev)
+    store.bind(ranzo.ev)
       
     // Group Update
-    rolter.ev.on('groups.update', async pea => {
+    ranzo.ev.on('groups.update', async pea => {
        //console.log(pea)
     // Get Profile Picture Group
        try {
-       ppgc = await rolter.profilePictureUrl(pea[0].id, 'image')
+       ppgc = await ranzo.profilePictureUrl(pea[0].id, 'image')
        } catch {
        ppgc = 'https://shortlink.hisokaarridho.my.id/rg1oT'
        }
        let wm_fatih = { url : ppgc }
        if (pea[0].announce == true) {
-       rolter.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup telah ditutup oleh admin, Sekarang hanya admin yang dapat mengirim pesan !`, `Group Settings Change Message`, wm_fatih, [])
+       ranzo.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup telah ditutup oleh admin, Sekarang hanya admin yang dapat mengirim pesan !`, `Group Settings Change Message`, wm_fatih, [])
        } else if(pea[0].announce == false) {
-       rolter.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup telah dibuka oleh admin, Sekarang peserta dapat mengirim pesan !`, `Group Settings Change Message`, wm_fatih, [])
+       ranzo.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup telah dibuka oleh admin, Sekarang peserta dapat mengirim pesan !`, `Group Settings Change Message`, wm_fatih, [])
        } else if (pea[0].restrict == true) {
-       rolter.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nInfo group telah dibatasi, Sekarang hanya admin yang dapat mengedit info group !`, `Group Settings Change Message`, wm_fatih, [])
+       ranzo.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nInfo group telah dibatasi, Sekarang hanya admin yang dapat mengedit info group !`, `Group Settings Change Message`, wm_fatih, [])
        } else if (pea[0].restrict == false) {
-       rolter.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nInfo group telah dibuka, Sekarang peserta dapat mengedit info group !`, `Group Settings Change Message`, wm_fatih, [])
+       ranzo.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nInfo group telah dibuka, Sekarang peserta dapat mengedit info group !`, `Group Settings Change Message`, wm_fatih, [])
        } else {
-       rolter.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup Subject telah diganti menjadi *${pea[0].subject}*`, `Group Settings Change Message`, wm_fatih, [])
+       ranzo.send5ButImg(pea[0].id, `「 *Group Settings Change* 」\n\nGroup Subject telah diganti menjadi *${pea[0].subject}*`, `Group Settings Change Message`, wm_fatih, [])
      }
     })
 
-    rolter.ev.on('group-participants.update', async (anu) => {
+    ranzo.ev.on('group-participants.update', async (anu) => {
         console.log(anu)
         try {
-            let metadata = await rolter.groupMetadata(anu.id)
+            let metadata = await ranzo.groupMetadata(anu.id)
             let participants = anu.participants
             for (let num of participants) {
                 // Get Profile Picture User
                 try {
-                    ppuser = await rolter.profilePictureUrl(num, 'image')
+                    ppuser = await ranzo.profilePictureUrl(num, 'image')
                 } catch {
                     ppuser = 'https://i0.wp.com/www.gambarunik.id/wp-content/uploads/2019/06/Top-Gambar-Foto-Profil-Kosong-Lucu-Tergokil-.jpg'
                 }
 
                 // Get Profile Picture Group
                 try {
-                    ppgroup = await rolter.profilePictureUrl(anu.id, 'image')
+                    ppgroup = await ranzo.profilePictureUrl(anu.id, 'image')
                 } catch {
                     ppgroup = 'https://i0.wp.com/www.gambarunik.id/wp-content/uploads/2019/06/Top-Gambar-Foto-Profil-Kosong-Lucu-Tergokil-.jpg'
                 }
 
-                let buttons = [{ buttonId: 'Baca Deskripsi', buttonText: { displayText: 'Welcome' }, type: 1 }]
-                let nyoutube = ('© Rolter Botz')
+                let buttons = [{ buttonId: 'Baca Deskripsi', buttonText: { displayText: 'Hi Beban !' }, type: 1 }]
+                let nyoutube = ('© Ranzo Botz')
                 let jumhal = '100000000000000'
                 if (anu.action == 'add') {
-                    rolter.sendMessage(anu.id, { image: { url: ppuser }, fileLength: jumhal, contextInfo: { mentionedJid: [num] }, caption: `ʜᴇʟʟᴏ @${num.split("@")[0]}, \nᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴍʏ ɢʀᴜᴘ ${metadata.subject}\nɪɴᴛʀᴏ ɴᴇᴡ ᴍᴇᴍ\n┌ > ɴᴀᴍᴀ : \n┌ > ᴀsᴀʟ ᴋᴏᴛᴀ : \n┌ > ᴜsɪᴀ : \n┌ > ɢᴇɴᴅᴇʀ : \n┌ > sᴛᴀᴛᴜs :`, buttons: buttons, footer: nyoutube})
-                } else if (anu.action == 'promote') {
-                    rolter.sendMessage(anu.id, { image: { url: ppuser }, mentions: [num], caption: `*@${num.split('@')[0]} Berhasil Di Naikan Jadi Admin ${metadata.subject}*` })
-                } else if (anu.action == 'demote') {
-                    rolter.sendMessage(anu.id, { image: { url: ppuser }, mentions: [num], caption: `*@${num.split('@')[0]} Berhasil Di Turunkan Jadi Admin ${metadata.subject}*` })
+                    ranzo.sendMessage(anu.id, { image: { url: ppuser }, fileLength: jumhal, contextInfo: { mentionedJid: [num] }, caption: `baca deskripsi @${num.split("@")[0]}`, buttons: buttons, footer: nyoutube})
               }
             }
         } catch (err) {
@@ -131,7 +127,7 @@ async function startRolter() {
     })
 	
     // Setting
-    rolter.decodeJid = (jid) => {
+    ranzo.decodeJid = (jid) => {
         if (!jid) return jid
         if (/:\d+@/gi.test(jid)) {
             let decode = jidDecode(jid) || {}
@@ -139,44 +135,44 @@ async function startRolter() {
         } else return jid
     }
     
-    rolter.ev.on('contacts.update', update => {
+    ranzo.ev.on('contacts.update', update => {
         for (let contact of update) {
-            let id = rolter.decodeJid(contact.id)
+            let id = ranzo.decodeJid(contact.id)
             if (store && store.contacts) store.contacts[id] = { id, name: contact.notify }
         }
     })
 
-    rolter.getName = (jid, withoutContact  = false) => {
-        id = rolter.decodeJid(jid)
-        withoutContact = rolter.withoutContact || withoutContact 
+    ranzo.getName = (jid, withoutContact  = false) => {
+        id = ranzo.decodeJid(jid)
+        withoutContact = ranzo.withoutContact || withoutContact 
         let v
         if (id.endsWith("@g.us")) return new Promise(async (resolve) => {
             v = store.contacts[id] || {}
-            if (!(v.name || v.subject)) v = rolter.groupMetadata(id) || {}
+            if (!(v.name || v.subject)) v = ranzo.groupMetadata(id) || {}
             resolve(v.name || v.subject || PhoneNumber('+' + id.replace('@s.whatsapp.net', '')).getNumber('international'))
         })
         else v = id === '0@s.whatsapp.net' ? {
             id,
             name: 'WhatsApp'
-        } : id === rolter.decodeJid(rolter.user.id) ?
-            rolter.user :
+        } : id === ranzo.decodeJid(ranzo.user.id) ?
+            ranzo.user :
             (store.contacts[id] || {})
             return (withoutContact ? '' : v.name) || v.subject || v.verifiedName || PhoneNumber('+' + jid.replace('@s.whatsapp.net', '')).getNumber('international')
     }
     
-    rolter.sendContact = async (jid, kon, quoted = '', opts = {}) => {
+    ranzo.sendContact = async (jid, kon, quoted = '', opts = {}) => {
 	let list = []
 	for (let i of kon) {
 	    list.push({
-	    	displayName: await rolter.getName(i + '@s.whatsapp.net'),
-	    	vcard: `BEGIN:VCARD\nVERSION:3.0\nN:${await rolter.getName(i + '@s.whatsapp.net')}\nFN:${await rolter.getName(i + '@s.whatsapp.net')}\nitem1.TEL;waid=${i}:${i}\nitem1.X-ABLabel:Ponsel\nitem2.EMAIL;type=INTERNET:rolterbusinnes@gmail.com\nitem2.X-ABLabel:Email\nitem3.URL:https://instagram.com/inibotrolter\nitem3.X-ABLabel:Instagram\nitem4.ADR:;;Indonesia;;;;\nitem4.X-ABLabel:Region\nEND:VCARD`
+	    	displayName: await ranzo.getName(i + '@s.whatsapp.net'),
+	    	vcard: `BEGIN:VCARD\nVERSION:3.0\nN:${await ranzo.getName(i + '@s.whatsapp.net')}\nFN:${await ranzo.getName(i + '@s.whatsapp.net')}\nitem1.TEL;waid=${i}:${i}\nitem1.X-ABLabel:Ponsel\nitem2.EMAIL;type=INTERNET:ranzobusinnes@gmail.com\nitem2.X-ABLabel:Email\nitem3.URL:https://instagram.com/inibotranzo\nitem3.X-ABLabel:Instagram\nitem4.ADR:;;Indonesia;;;;\nitem4.X-ABLabel:Region\nEND:VCARD`
 	    })
 	}
-	rolter.sendMessage(jid, { contacts: { displayName: `${list.length} Kontak`, contacts: list }, ...opts }, { quoted })
+	ranzo.sendMessage(jid, { contacts: { displayName: `${list.length} Kontak`, contacts: list }, ...opts }, { quoted })
     }
     
-    rolter.setStatus = (status) => {
-        rolter.query({
+    ranzo.setStatus = (status) => {
+        ranzo.query({
             tag: 'iq',
             attrs: {
                 to: '@s.whatsapp.net',
@@ -192,21 +188,21 @@ async function startRolter() {
         return status
     }
 	
-    rolter.public = true
-	 rolter.autosw = false
-	 rolter.sendsw = '12053901620@s.whatsapp.net'
+    ranzo.public = true
+	 ranzo.autosw = false
+	 ranzo.sendsw = '12053901620@s.whatsapp.net'
 	 
-    rolter.serializeM = (m) => smsg(rolter, m, store)
+    ranzo.serializeM = (m) => smsg(ranzo, m, store)
 
-    rolter.ev.on('connection.update', async (update) => {
+    ranzo.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update
         if (connection === 'close') {
-            lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut ? startRolter() : console.log('Koneksi Terputus...')
+            lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut ? startRanzo() : console.log('Koneksi Terputus...')
         }
-        console.log('Berhasil Connected Di Server Rolter', update)
+        console.log('Terhubung Ranzo', update)
     })
 
-    rolter.ev.on('creds.update', saveState)
+    ranzo.ev.on('creds.update', saveState)
 
     // Add Other
 
@@ -218,25 +214,25 @@ async function startRolter() {
       * @param {*} quoted
       * @param {*} options
       */
-     rolter.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
+     ranzo.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
       let mime = '';
       let res = await axios.head(url)
       mime = res.headers['content-type']
       if (mime.split("/")[1] === "gif") {
-     return rolter.sendMessage(jid, { video: await getBuffer(url), caption: caption, gifPlayback: true, ...options}, { quoted: quoted, ...options})
+     return ranzo.sendMessage(jid, { video: await getBuffer(url), caption: caption, gifPlayback: true, ...options}, { quoted: quoted, ...options})
       }
       let type = mime.split("/")[0]+"Message"
       if(mime === "application/pdf"){
-     return rolter.sendMessage(jid, { document: await getBuffer(url), mimetype: 'application/pdf', caption: caption, ...options}, { quoted: quoted, ...options })
+     return ranzo.sendMessage(jid, { document: await getBuffer(url), mimetype: 'application/pdf', caption: caption, ...options}, { quoted: quoted, ...options })
       }
       if(mime.split("/")[0] === "image"){
-     return rolter.sendMessage(jid, { image: await getBuffer(url), caption: caption, ...options}, { quoted: quoted, ...options})
+     return ranzo.sendMessage(jid, { image: await getBuffer(url), caption: caption, ...options}, { quoted: quoted, ...options})
       }
       if(mime.split("/")[0] === "video"){
-     return rolter.sendMessage(jid, { video: await getBuffer(url), caption: caption, mimetype: 'video/mp4', ...options}, { quoted: quoted, ...options })
+     return ranzo.sendMessage(jid, { video: await getBuffer(url), caption: caption, mimetype: 'video/mp4', ...options}, { quoted: quoted, ...options })
       }
       if(mime.split("/")[0] === "audio"){
-     return rolter.sendMessage(jid, { audio: await getBuffer(url), caption: caption, mimetype: 'audio/mpeg', ...options}, { quoted: quoted, ...options })
+     return ranzo.sendMessage(jid, { audio: await getBuffer(url), caption: caption, mimetype: 'audio/mpeg', ...options}, { quoted: quoted, ...options })
       }
       }
 
@@ -250,7 +246,7 @@ async function startRolter() {
       *@param [*] sections
       *@param {*} quoted
       */
-        rolter.sendListMsg = (jid, text = '', footer = '', title = '' , butText = '', sects = [], quoted) => {
+        ranzo.sendListMsg = (jid, text = '', footer = '', title = '' , butText = '', sects = [], quoted) => {
         let sections = sects
         var listMes = {
         text: text,
@@ -259,7 +255,7 @@ async function startRolter() {
         buttonText: butText,
         sections
         }
-        rolter.sendMessage(jid, listMes, { quoted: quoted })
+        ranzo.sendMessage(jid, listMes, { quoted: quoted })
         }
 
     /** Send Button 5 Message
@@ -270,14 +266,14 @@ async function startRolter() {
      * @param {*} button
      * @returns 
      */
-        rolter.send5ButMsg = (jid, text = '' , footer = '', but = []) =>{
+        ranzo.send5ButMsg = (jid, text = '' , footer = '', but = []) =>{
         let templateButtons = but
         var templateMessage = {
         text: text,
         footer: footer,
         templateButtons: templateButtons
         }
-        rolter.sendMessage(jid, templateMessage)
+        ranzo.sendMessage(jid, templateMessage)
         }
 
     /** Send Button 5 Image
@@ -290,8 +286,8 @@ async function startRolter() {
      * @param {*} options
      * @returns
      */
-    rolter.send5ButImg = async (jid , text = '' , footer = '', img, but = [], options = {}) =>{
-        let message = await prepareWAMessageMedia({ image: img }, { upload: rolter.waUploadToServer })
+    ranzo.send5ButImg = async (jid , text = '' , footer = '', img, but = [], options = {}) =>{
+        let message = await prepareWAMessageMedia({ image: img }, { upload: ranzo.waUploadToServer })
         var template = generateWAMessageFromContent(jid, proto.Message.fromObject({
         templateMessage: {
         hydratedTemplate: {
@@ -302,7 +298,7 @@ async function startRolter() {
             }
             }
             }), options)
-            rolter.relayMessage(jid, template.message, { messageId: template.key.id })
+            ranzo.relayMessage(jid, template.message, { messageId: template.key.id })
     }
 
     /** Send Button 5 Video
@@ -315,8 +311,8 @@ async function startRolter() {
      * @param {*} options
      * @returns
      */
-    rolter.send5ButVid = async (jid , text = '' , footer = '', vid, but = [], options = {}) =>{
-        let message = await prepareWAMessageMedia({ video: vid }, { upload: rolter.waUploadToServer })
+    ranzo.send5ButVid = async (jid , text = '' , footer = '', vid, but = [], options = {}) =>{
+        let message = await prepareWAMessageMedia({ video: vid }, { upload: ranzo.waUploadToServer })
         var template = generateWAMessageFromContent(jid, proto.Message.fromObject({
         templateMessage: {
         hydratedTemplate: {
@@ -327,7 +323,7 @@ async function startRolter() {
             }
             }
             }), options)
-            rolter.relayMessage(jid, template.message, { messageId: template.key.id })
+            ranzo.relayMessage(jid, template.message, { messageId: template.key.id })
     }
 
     /** Send Button 5 Gif
@@ -340,8 +336,8 @@ async function startRolter() {
      * @param {*} options
      * @returns
      */
-    rolter.send5ButGif = async (jid , text = '' , footer = '', gif, but = [], options = {}) =>{
-        let message = await prepareWAMessageMedia({ video: gif, gifPlayback: true }, { upload: rolter.waUploadToServer })
+    ranzo.send5ButGif = async (jid , text = '' , footer = '', gif, but = [], options = {}) =>{
+        let message = await prepareWAMessageMedia({ video: gif, gifPlayback: true }, { upload: ranzo.waUploadToServer })
         var template = generateWAMessageFromContent(jid, proto.Message.fromObject({
         templateMessage: {
         hydratedTemplate: {
@@ -352,7 +348,7 @@ async function startRolter() {
             }
             }
             }), options)
-            rolter.relayMessage(jid, template.message, { messageId: template.key.id })
+            ranzo.relayMessage(jid, template.message, { messageId: template.key.id })
     }
 
     /**
@@ -364,7 +360,7 @@ async function startRolter() {
      * @param {*} quoted 
      * @param {*} options 
      */
-    rolter.sendButtonText = (jid, buttons = [], text, footer, quoted = '', options = {}) => {
+    ranzo.sendButtonText = (jid, buttons = [], text, footer, quoted = '', options = {}) => {
         let buttonMessage = {
             text,
             footer,
@@ -372,7 +368,7 @@ async function startRolter() {
             headerType: 2,
             ...options
         }
-        rolter.sendMessage(jid, buttonMessage, { quoted, ...options })
+        ranzo.sendMessage(jid, buttonMessage, { quoted, ...options })
     }
     
     /**
@@ -383,7 +379,7 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendText = (jid, text, quoted = '', options) => rolter.sendMessage(jid, { text: text, ...options }, { quoted })
+    ranzo.sendText = (jid, text, quoted = '', options) => ranzo.sendMessage(jid, { text: text, ...options }, { quoted })
 
     /**
      * 
@@ -394,9 +390,9 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendImage = async (jid, path, caption = '', quoted = '', options) => {
+    ranzo.sendImage = async (jid, path, caption = '', quoted = '', options) => {
 	let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await rolter.sendMessage(jid, { image: buffer, caption: caption, ...options }, { quoted })
+        return await ranzo.sendMessage(jid, { image: buffer, caption: caption, ...options }, { quoted })
     }
 
     /**
@@ -408,9 +404,9 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendVideo = async (jid, path, caption = '', quoted = '', gif = false, options) => {
+    ranzo.sendVideo = async (jid, path, caption = '', quoted = '', gif = false, options) => {
         let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await rolter.sendMessage(jid, { video: buffer, caption: caption, gifPlayback: gif, ...options }, { quoted })
+        return await ranzo.sendMessage(jid, { video: buffer, caption: caption, gifPlayback: gif, ...options }, { quoted })
     }
 
     /**
@@ -422,9 +418,9 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendAudio = async (jid, path, quoted = '', ptt = false, options) => {
+    ranzo.sendAudio = async (jid, path, quoted = '', ptt = false, options) => {
         let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await rolter.sendMessage(jid, { audio: buffer, ptt: ptt, ...options }, { quoted })
+        return await ranzo.sendMessage(jid, { audio: buffer, ptt: ptt, ...options }, { quoted })
     }
 
     /**
@@ -435,7 +431,7 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendTextWithMentions = async (jid, text, quoted, options = {}) => rolter.sendMessage(jid, { text: text, contextInfo: { mentionedJid: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net') }, ...options }, { quoted })
+    ranzo.sendTextWithMentions = async (jid, text, quoted, options = {}) => ranzo.sendMessage(jid, { text: text, contextInfo: { mentionedJid: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net') }, ...options }, { quoted })
 
     /**
      * 
@@ -445,7 +441,7 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
+    ranzo.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
         let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
         let buffer
         if (options && (options.packname || options.author)) {
@@ -454,7 +450,7 @@ async function startRolter() {
             buffer = await imageToWebp(buff)
         }
 
-        await rolter.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
+        await ranzo.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
         return buffer
     }
 
@@ -466,7 +462,7 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
+    ranzo.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
         let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
         let buffer
         if (options && (options.packname || options.author)) {
@@ -475,7 +471,7 @@ async function startRolter() {
             buffer = await videoToWebp(buff)
         }
 
-        await rolter.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
+        await ranzo.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
         return buffer
     }
 	
@@ -486,7 +482,7 @@ async function startRolter() {
      * @param {*} attachExtension 
      * @returns 
      */
-    rolter.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
+    ranzo.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
         let quoted = message.msg ? message.msg : message
         let mime = (message.msg || message).mimetype || ''
         let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
@@ -502,7 +498,7 @@ async function startRolter() {
         return trueFileName
     }
 
-    rolter.downloadMediaMessage = async (message) => {
+    ranzo.downloadMediaMessage = async (message) => {
         let mime = (message.msg || message).mimetype || ''
         let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
         const stream = await downloadContentFromMessage(message, messageType)
@@ -524,8 +520,8 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
-        let types = await rolter.getFile(path, true)
+    ranzo.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
+        let types = await ranzo.getFile(path, true)
            let { mime, ext, res, data, filename } = types
            if (res && res.status !== 200 || file.length <= 65536) {
                try { throw { json: JSON.parse(file.toString()) } }
@@ -534,7 +530,7 @@ async function startRolter() {
        let type = '', mimetype = mime, pathFile = filename
        if (options.asDocument) type = 'document'
        if (options.asSticker || /webp/.test(mime)) {
-        let { writeExif } = require('./lib/exif')
+        let { writeExif } = require('./options/exif')
         let media = { mimetype: mime, data }
         pathFile = await writeExif(media, { packname: options.packname ? options.packname : global.packname, author: options.author ? options.author : global.author, categories: options.categories ? options.categories : [] })
         await fs.promises.unlink(filename)
@@ -545,7 +541,7 @@ async function startRolter() {
        else if (/video/.test(mime)) type = 'video'
        else if (/audio/.test(mime)) type = 'audio'
        else type = 'document'
-       await rolter.sendMessage(jid, { [type]: { url: pathFile }, caption, mimetype, fileName, ...options }, { quoted, ...options })
+       await ranzo.sendMessage(jid, { [type]: { url: pathFile }, caption, mimetype, fileName, ...options }, { quoted, ...options })
        return fs.promises.unlink(pathFile)
        }
 
@@ -557,7 +553,7 @@ async function startRolter() {
      * @param {*} options 
      * @returns 
      */
-    rolter.copyNForward = async (jid, message, forceForward = false, options = {}) => {
+    ranzo.copyNForward = async (jid, message, forceForward = false, options = {}) => {
         let vtype
 		if (options.readViewOnce) {
 			message.message = message.message && message.message.ephemeralMessage && message.message.ephemeralMessage.message ? message.message.ephemeralMessage.message : (message.message || undefined)
@@ -588,10 +584,10 @@ async function startRolter() {
                 }
             } : {})
         } : {})
-        await rolter.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
+        await ranzo.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
         return waMessage
     };
-    rolter.cMod = (jid, copy, text = '', sender = rolter.user.id, options = {}) => {
+    ranzo.cMod = (jid, copy, text = '', sender = ranzo.user.id, options = {}) => {
         //let copy = message.toJSON()
 		let mtype = Object.keys(copy.message)[0]
 		let isEphemeral = mtype === 'ephemeralMessage'
@@ -612,7 +608,7 @@ async function startRolter() {
 		if (copy.key.remoteJid.includes('@s.whatsapp.net')) sender = sender || copy.key.remoteJid
 		else if (copy.key.remoteJid.includes('@broadcast')) sender = sender || copy.key.remoteJid
 		copy.key.remoteJid = jid
-		copy.key.fromMe = sender === rolter.user.id
+		copy.key.fromMe = sender === ranzo.user.id
 
         return proto.WebMessageInfo.fromObject(copy)
     }
@@ -623,7 +619,7 @@ async function startRolter() {
      * @param {*} path 
      * @returns 
      */
-    rolter.getFile = async (PATH, save) => {
+    ranzo.getFile = async (PATH, save) => {
         let res
         let data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split`,`[1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await getBuffer(PATH)) : fs.existsSync(PATH) ? (filename = PATH, fs.readFileSync(PATH)) : typeof PATH === 'string' ? PATH : Buffer.alloc(0)
         //if (!Buffer.isBuffer(data)) throw new TypeError('Result is not a buffer')
@@ -642,39 +638,39 @@ async function startRolter() {
         }
 
     }
-rolter.ev.on('messages.upsert', async chatUpdate => {
+ranzo.ev.on('messages.upsert', async chatUpdate => {
         //console.log(JSON.stringify(chatUpdate, undefined, 2))
         try {
         mek = chatUpdate.messages[0]
         if (!mek.message) return
 			if (mek.key.remoteJid === 'status@broadcast') {
-				let bot = rolter.decodeJid(rolter.user.id)
-				if (!rolter.autosw) return
+				let bot = ranzo.decodeJid(ranzo.user.id)
+				if (!ranzo.autosw) return
 				setTimeout(() => {
-					rolter.readMessages([mek.key])
+					ranzo.readMessages([mek.key])
 					let mt = getContentType(mek.message)
 					console.log((/protocolMessage/i.test(mt)) ? `${mek.key.participant.split('@')[0]} Telah menghapus Story nya` : 'Melihat story user : '+mek.key.participant.split('@')[0]);
-					if (/protocolMessage/i.test(mt)) rolter.sendMessage(rolter.sendsw, {text:'Status dari @'+mek.key.participant.split('@')[0]+' Telah dihapus', mentions: [mek.key.participant]})
+					if (/protocolMessage/i.test(mt)) ranzo.sendMessage(ranzo.sendsw, {text:'Status dari @'+mek.key.participant.split('@')[0]+' Telah dihapus', mentions: [mek.key.participant]})
 					if (/(imageMessage|videoMessage|extendedTextMessage)/i.test(mt)) {
 						let keke = (mt == 'extendedTextMessage') ? `\nStory Teks Berisi : ${mek.message.extendedTextMessage.text}` : (mt == 'imageMessage') ? `\nStory Gambar dengan Caption : ${mek.message.imageMessage.caption}` : (mt == 'videoMessage') ? `\nStory Video dengan Caption : ${mek.message.videoMessage.caption}` : '\nTidak diketahui cek saja langsung!!!'
-						rolter.sendMessage(rolter.sendsw, {text: 'Melihat story dari @'+mek.key.participant.split('@')[0] + keke, mentions: [mek.key.participant]});
+						ranzo.sendMessage(ranzo.sendsw, {text: 'Melihat story dari @'+mek.key.participant.split('@')[0] + keke, mentions: [mek.key.participant]});
 					}
 				}, 2000);
 			}
 			if (!mek.message) return
         mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
-        if (!rolter.public && !mek.key.fromMe && chatUpdate.type === 'notify') return
+        if (!ranzo.public && !mek.key.fromMe && chatUpdate.type === 'notify') return
         if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
-        m = smsg(rolter, mek, store)
-        require("./options/rolter")(rolter, m, chatUpdate, store)
+        m = smsg(ranzo, mek, store)
+        require("./options/ranzo")(ranzo, m, chatUpdate, store)
         } catch (err) {
             console.log(err)
         }
     })
-    return rolter
+    return ranzo
 }
 
-startRolter()
+startRanzo()
 
 
 let file = require.resolve(__filename)

@@ -16,15 +16,15 @@ global.APIKeys = {
 }
 
 // Other
-global.owner = ['19563020750']
-global.ownernomer = "19563020750"
-global.premium = ['19563020750','12232080470','6287723814311','6289610145000']
-global.packname = 'Created By Rolter'
-global.author = 'Botz'
-global.sessionName = 'rolterdev'
+global.owner = ['19563033541']
+global.ownernomer = "19563033541"
+global.premium = ['19563033541']
+global.packname = 'Created By Ranzo'
+global.author = 'Botz Whatsapp'
+global.sessionName = 'ranzostoree'
 global.jumhal = '100000000000000'
 global.prefa = ['','!','.','#','&']
-global.sp = 'Volter Storee'
+global.sp = 'Ranzo Storee'
 global.mess = {
     success: '*_DONE ... ✅_*',
     admin: '*_FITUR KHUSUS ADMIN GROUP ❗_*',
@@ -41,7 +41,7 @@ global.limitawal = {
     premium: "Unlimited",
     free: 5
 }
-global.thumb = fs.readFileSync('./image/rolter.jpg')
+global.thumb = fs.readFileSync('./image/ranzo.jpg')
 global.vaze = { url: 'https://telegra.ph/file/15209657f9d4f59c7ca1e.mp4' }
 
 let file = require.resolve(__filename)

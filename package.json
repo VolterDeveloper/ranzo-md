@@ -1,7 +1,7 @@
 {
-  "name": "volterjb12",
+  "name": "ranzojb12",
   "version": "1.2.3",
-  "description": "New Update Volter MD",
+  "description": "New Update Ranzo MD",
   "main": "main.js",
   "type": "commonjs",
   "scripts": {
@@ -18,7 +18,7 @@
     "bot-md",
     "multi-device"
   ],
-  "author": "Volter Dev.",
+  "author": "Ranzo Storee.",
   "license": "MIT",
   "dependencies": {
     "@adiwajshing/baileys": "^4.1.0",
